@@ -11,25 +11,34 @@ pipeline {
    agent  any
     stages {
 
-       stage ("terraform init") {
+        stage('Plan') {
             steps {
-                sh ('terraform init -reconfigure') 
+                sh 'pwd; terraform init'
+                sh "pwd; terraform plan -out tfplan"
+                sh 'pwd; terraform show -no-color tfplan > tfplan.txt'
             }
         }
-        
-        stage ("plan") {
-            steps {
-                sh ('terraform plan') 
-            }
-        }
-
-        stage (" Action") {
-            steps {
-                echo "Terraform action is --> ${action}"
-                sh ('terraform ${action} --auto-approve') 
+        stage('Approval') {
+           when {
+               not {
+                   equals expected: true, actual: params.autoApprove
+               }
            }
-        }
 
+           steps {
+               script {
+                    def plan = readFile 'tfplan.txt'
+                    input message: "Do you want to apply the plan?",
+                    parameters: [text(name: 'Plan', description: 'Please review the plan', defaultValue: plan)]
+               }
+           }
+       }
+
+        stage('Apply') {
+            steps {
+                sh "pwd ; terraform apply -input=false tfplan"
+            }
+        }
     }
 
   }
