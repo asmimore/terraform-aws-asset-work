@@ -13,7 +13,7 @@ pipeline {
 
         stage('Plan') {
             steps {
-                sh ("terraform init -reconfigure")
+                sh ('terraform init -reconfigure')
                 sh ('terraform plan -out tfplan') 
 
                 sh ('terraform show -no-color tfplan > tfplan.txt')
